@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ThemeToggleWrapper from "@/components/ThemeToggleWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,8 +24,35 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-50 min-h-screen">{children}</body>
+    <html lang="en"
+      suppressHydrationWarning
+      // className can be set for SSR dark mode in the future
+    >
+      <head>
+        {/* Prevent FOUC: set .dark class before hydration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  try {
+    var theme = localStorage.getItem('theme');
+    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch(e){}
+})();
+            `,
+          }}
+        />
+      </head>
+      <body className="bg-gray-50 min-h-screen">
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggleWrapper />
+        </div>
+        {children}
+      </body>
     </html>
   )
 }

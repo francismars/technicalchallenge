@@ -14,6 +14,10 @@ interface UserStore {
   showOnlyFavorites: boolean;
   offline: boolean;
   searchTerm: string;
+  orderBy: 'first' | 'last' | 'email';
+  orderDirection: 'asc' | 'desc';
+  setOrderBy: (field: 'first' | 'last' | 'email') => void;
+  setOrderDirection: (dir: 'asc' | 'desc') => void;
   setSearchTerm: (term: string) => void;
   setOffline: (offline: boolean) => void;
   setShowOnlyFavorites: (show: boolean) => void;
@@ -29,6 +33,13 @@ function paginate(users: User[], page: number) {
   const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
   const paginatedUsers = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   return { paginatedUsers, totalPages };
+}
+
+function orderUsers(users: User[], orderBy: 'first' | 'last' | 'email', orderDirection: 'asc' | 'desc') {
+  return [...users].sort((a, b) => {
+    const cmp = a[orderBy].localeCompare(b[orderBy]);
+    return orderDirection === 'asc' ? cmp : -cmp;
+  });
 }
 
 let isFetchingUsers = false;
@@ -51,16 +62,50 @@ export const useUserStore = create<UserStore>((set, get) => {
     showOnlyFavorites: false,
     offline: initialOffline,
     searchTerm: "",
+    orderBy: 'first',
+    orderDirection: 'asc',
+    setOrderBy: (field) => {
+      set({ orderBy: field, page: 1 });
+      const { users, searchTerm, orderDirection } = get();
+      let filtered = users;
+      if (searchTerm) {
+        filtered = users.filter(u =>
+          u.first.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.last.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      const { orderBy } = get();
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, 1);
+      set({ paginatedUsers, totalPages });
+    },
+    setOrderDirection: (dir) => {
+      set({ orderDirection: dir, page: 1 });
+      const { users, searchTerm, orderBy } = get();
+      let filtered = users;
+      if (searchTerm) {
+        filtered = users.filter(u =>
+          u.first.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.last.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      const { orderDirection } = get();
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, 1);
+      set({ paginatedUsers, totalPages });
+    },
     setSearchTerm: (term) => {
       set({ searchTerm: term, page: 1 });
-      // recalculate paginatedUsers
-      const { users } = get();
+      const { users, orderBy, orderDirection } = get();
       const filtered = users.filter(u =>
         u.first.toLowerCase().includes(term.toLowerCase()) ||
         u.last.toLowerCase().includes(term.toLowerCase()) ||
         u.email.toLowerCase().includes(term.toLowerCase())
       );
-      const { paginatedUsers, totalPages } = paginate(filtered, 1);
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, 1);
       set({ paginatedUsers, totalPages });
     },
     setOffline: (offline) => {
@@ -77,7 +122,7 @@ export const useUserStore = create<UserStore>((set, get) => {
       } else {
         users = await db.users.toArray();
       }
-      const { searchTerm } = get();
+      const { searchTerm, orderBy, orderDirection } = get();
       let filtered = users;
       if (searchTerm) {
         filtered = users.filter(u =>
@@ -86,11 +131,12 @@ export const useUserStore = create<UserStore>((set, get) => {
           u.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      const { paginatedUsers, totalPages } = paginate(filtered, 1);
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, 1);
       set({ users, paginatedUsers, totalPages, page: 1, loading: false });
     },
     setPage: (page) => {
-      const { users, searchTerm } = get();
+      const { users, searchTerm, orderBy, orderDirection } = get();
       let filtered = users;
       if (searchTerm) {
         filtered = users.filter(u =>
@@ -99,7 +145,8 @@ export const useUserStore = create<UserStore>((set, get) => {
           u.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      const { paginatedUsers, totalPages } = paginate(filtered, page);
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, page);
       set({ page, paginatedUsers, totalPages });
     },
     nextPage: () => {
@@ -116,7 +163,7 @@ export const useUserStore = create<UserStore>((set, get) => {
       set({ loading: true, error: "" });
       let allUsers = await db.users.toArray();
       console.log('Users in DB before fetch:', allUsers.length, allUsers.map(u => u.uuid));
-      const { offline, searchTerm } = get();
+      const { offline, searchTerm, orderBy, orderDirection } = get();
       if (allUsers.length === 0) {
         try {
           if (offline) throw new Error("Simulated offline");
@@ -154,7 +201,8 @@ export const useUserStore = create<UserStore>((set, get) => {
           u.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      const { paginatedUsers, totalPages } = paginate(filtered, 1);
+      const ordered = orderUsers(filtered, orderBy, orderDirection);
+      const { paginatedUsers, totalPages } = paginate(ordered, 1);
       set({ users: allUsers, paginatedUsers, totalPages, page: 1, loading: false });
       // Load favorites from IndexedDB
       const favArr = allUsers.filter(u => u.favorite === true);
@@ -164,14 +212,24 @@ export const useUserStore = create<UserStore>((set, get) => {
       isFetchingUsers = false;
     },
     toggleFavorite: async (user) => {
-      const { favorites, showOnlyFavorites, setShowOnlyFavorites, page, users } = get();
+      const { favorites, showOnlyFavorites, setShowOnlyFavorites, page, users, searchTerm, orderBy, orderDirection } = get();
       const isFav = !!favorites[user.uuid];
       await db.users.update(user.uuid, { favorite: !isFav });
       set({ favorites: { ...favorites, [user.uuid]: !isFav } });
       if (showOnlyFavorites) {
         await setShowOnlyFavorites(true);
       } else {
-        const { paginatedUsers, totalPages } = paginate(users, page);
+        // Always re-sort and re-paginate after favorite toggle
+        let filtered = users;
+        if (searchTerm) {
+          filtered = users.filter(u =>
+            u.first.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            u.last.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        }
+        const ordered = orderUsers(filtered, orderBy, orderDirection);
+        const { paginatedUsers, totalPages } = paginate(ordered, page);
         set({ paginatedUsers, totalPages });
       }
     },
