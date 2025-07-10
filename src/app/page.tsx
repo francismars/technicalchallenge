@@ -65,7 +65,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-950 dark:to-blue-950 p-4">
-      <section className="w-full max-w-5xl bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 flex flex-col gap-8">
+      <section className="w-full max-w-5xl bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 flex flex-col gap-4">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-3xl font-bold text-center tracking-tight dark:text-white">User List</h1>
           <div className="flex items-center gap-2">

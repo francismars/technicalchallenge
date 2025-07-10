@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Local-First Next.js User List App
+
+A modern, local-first Next.js app using Zustand for state, Dexie.js for IndexedDB caching, and Tailwind CSS for styling. Features offline support, favorites, search, sorting, and a responsive UI with dark mode.
 
 ## Getting Started
 
-First, run the development server:
-
+### 1. Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Run the development server
+```bash
+npm run dev
+```
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Offline/Failure Simulation
+- Use the **"Go Offline"** toggle in the top-right to simulate offline mode. This disables API fetches and forces the app to use cached data.
+- You can also disconnect your network or block requests to `randomuser.me` to test offline fallback.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Known Issues / Limitations
+- The app only fetches 10 users on first load; no infinite scroll or real API pagination.
+- IndexedDB is cleared only by browser or dev tools; no in-app clear/reset.
+- Some UI elements may need further polish for accessibility (a11y).
+- SSR dark mode is handled with a script; true SSR theme from cookies is not yet implemented.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## What Could Be Improved
+- Add real API pagination and infinite scroll.
+- Use service workers for even better offline support.
+- Improve accessibility and add keyboard navigation.
+- Add tests (unit, integration, e2e) and CI setup.
+- Polish the UI further and add animations.
