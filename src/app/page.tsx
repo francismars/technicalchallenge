@@ -2,6 +2,10 @@
 import React from "react";
 import { useUserStore } from "@/store/userStore";
 import { db, User as DBUser } from "@/db";
+import FavoritesControls from "@/components/FavoritesControls";
+import SearchSortControls from "@/components/SearchSortControls";
+import UserCard from "@/components/UserCard";
+import Pagination from "@/components/Pagination";
 
 type User = DBUser;
 
@@ -96,64 +100,20 @@ export default function Home() {
             </button>
           </div>
         </div>
-        {/* Favorites Controls Section */}
-        <div className="flex flex-wrap gap-4 justify-center items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 mb-4 shadow-sm">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showOnlyFavorites}
-              onChange={e => setShowOnlyFavorites(e.target.checked)}
-              className="accent-blue-500"
-            />
-            <span className="text-gray-700 dark:text-gray-200 font-medium">Show Favorites</span>
-          </label>
-          <button
-            onClick={clearAllFavorites}
-            className="px-3 py-1 rounded bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 font-semibold hover:bg-red-200 dark:hover:bg-red-800 transition border border-red-200 dark:border-red-700 shadow-sm disabled:opacity-50"
-            disabled={Object.keys(favorites).length === 0}
-          >
-            Clear Favorites
-          </button>
-        </div>
-        {/* Search & Sort Controls Section */}
-        <div className="flex flex-wrap gap-4 justify-center items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 mb-4 shadow-sm">
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 w-full max-w-2xl">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search by name or email..."
-              className="px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-100 shadow flex-1 min-w-0"
-            />
-            <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded shadow px-2 py-1 border border-gray-200 dark:border-gray-700 w-full md:w-auto">
-              <label className="font-medium text-gray-700 dark:text-gray-200 mr-1">Sort:</label>
-              <select
-                value={orderBy}
-                onChange={e => setOrderBy(e.target.value as 'first' | 'last' | 'email')}
-                className="px-2 py-1 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-100 w-full md:w-auto"
-              >
-                <option value="first">First Name</option>
-                <option value="last">Last Name</option>
-                <option value="email">Email</option>
-              </select>
-              <button
-                onClick={() => setOrderDirection(orderDirection === 'asc' ? 'desc' : 'asc')}
-                className="flex items-center px-2 py-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow hover:bg-blue-100 dark:hover:bg-blue-950 transition"
-                title={orderDirection === 'asc' ? 'Ascending' : 'Descending'}
-              >
-                {orderDirection === 'asc' ? (
-                  <svg className="w-4 h-4 text-blue-500 dark:text-blue-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 text-blue-500 dark:text-blue-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <FavoritesControls
+          showOnlyFavorites={showOnlyFavorites}
+          setShowOnlyFavorites={setShowOnlyFavorites}
+          clearAllFavorites={clearAllFavorites}
+          favorites={favorites}
+        />
+        <SearchSortControls
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          orderBy={orderBy}
+          setOrderBy={setOrderBy}
+          orderDirection={orderDirection}
+          setOrderDirection={setOrderDirection}
+        />
         {offline && (
           <div className="text-center text-orange-500 text-sm font-semibold">Offline mode enabled (API requests will fail)</div>
         )}
@@ -165,44 +125,21 @@ export default function Home() {
         ) : (
           <div className="flex flex-col sm:flex-row gap-10 justify-center items-stretch">
             {paginatedUsers.map(user => (
-              <div key={user.uuid} className="flex flex-col items-center bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-0 overflow-hidden h-full min-w-0 max-w-[180px] w-[90%] sm:w-[180px] mx-auto transition-transform hover:scale-105">
-                <div className="w-full aspect-square flex items-center justify-center bg-gray-100 dark:bg-gray-800" style={{ maxWidth: 160, maxHeight: 160 }}>
-                  <img src={user.thumbnail} alt="avatar" className="object-cover w-full h-full rounded-xl ring-2 ring-blue-200 dark:ring-blue-900" />
-                </div>
-                <div className="flex flex-col items-center p-4 w-full">
-                  <div className="font-semibold text-base text-gray-900 dark:text-gray-100 mb-1 truncate w-full text-center tracking-tight">{user.first} {user.last}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 break-all w-full text-center">{user.email}</div>
-                  <button
-                    className={
-                      "text-xl transition " + (favorites[user.uuid] ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400 dark:text-gray-600 dark:hover:text-yellow-400")
-                    }
-                    title={favorites[user.uuid] ? "Unfavorite" : "Mark as favorite"}
-                    onClick={() => toggleFavorite(user)}
-                  >
-                    ★
-                  </button>
-                </div>
-              </div>
+              <UserCard
+                key={user.uuid}
+                user={user}
+                isFavorite={!!favorites[user.uuid]}
+                toggleFavorite={toggleFavorite}
+              />
             ))}
           </div>
         )}
-        <div className="flex justify-between items-center mt-4 gap-2">
-          <button
-            className="px-4 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 font-medium shadow"
-            onClick={prevPage}
-            disabled={page === 1}
-          >
-            Previous
-          </button>
-          <span className="text-base font-semibold text-gray-700 dark:text-gray-200">{page} / {totalPages}</span>
-          <button
-            className="px-4 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 font-medium shadow"
-            onClick={nextPage}
-            disabled={page === totalPages}
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          prevPage={prevPage}
+          nextPage={nextPage}
+        />
       </section>
     </main>
   );
