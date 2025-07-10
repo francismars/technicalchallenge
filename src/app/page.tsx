@@ -1,13 +1,10 @@
 "use client";
 import React from "react";
 import { useUserStore } from "@/store/userStore";
-import { db, User as DBUser } from "@/db";
 import FavoritesControls from "@/components/FavoritesControls";
 import SearchSortControls from "@/components/SearchSortControls";
 import UserCard from "@/components/UserCard";
 import Pagination from "@/components/Pagination";
-
-type User = DBUser;
 
 export default function Home() {
   const {
