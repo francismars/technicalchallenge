@@ -4,4 +4,10 @@ const nextConfig: NextConfig = {
   /* config options here */
 };
 
+module.exports = {
+  images: {
+    domains: ['randomuser.me'],
+  },
+}; 
+
 export default nextConfig;
