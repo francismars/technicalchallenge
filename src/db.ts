@@ -7,6 +7,7 @@ export interface User {
   email: string;
   thumbnail: string;
   page: number;
+  favorite?: boolean;
 }
 
 export class NotesDB extends Dexie {
@@ -14,8 +15,8 @@ export class NotesDB extends Dexie {
 
   constructor() {
     super("notesDB");
-    this.version(2).stores({
-      users: "uuid, page, email"
+    this.version(3).stores({
+      users: "uuid, page, email, favorite"
     });
   }
 }
